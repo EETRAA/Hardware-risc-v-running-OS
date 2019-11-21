@@ -1,2 +1,2 @@
-# Hardware-risc-v-running-OS
+# Hardware-risc-v-with OS support
 A risc-v architecture implementation.
