@@ -12,3 +12,5 @@ A risc-v architecture implementation.
 3. [Sifive core IP](https://www.sifive.com/risc-v-core-ip)
 
 4. [UCB github main page](https://github.com/ucb-bar)
+
+5. [rocket chip github main page](https://github.com/chipsalliance/rocket-chip)
