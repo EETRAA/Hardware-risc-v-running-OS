@@ -1,9 +1,9 @@
 # Hardware-risc-v-with OS support
 A risc-v architecture implementation.
 
-## current progress:
+## Current progress:
 
-- useful websites:
+- Useful links :link::
 
 1. [IDE-Embedded Studio](https://www.segger.com/products/development-tools/embedded-studio/editions/risc-v/)
 
