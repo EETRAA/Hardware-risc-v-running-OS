@@ -24,12 +24,83 @@ Chisel是基于Scala的，所以有Scala的学习经验的话，会很好的帮�
 
 ## 开始学习吧！
 
-官方的推荐是从[Chisel Bootcamp](https://github.com/freechipsproject/chisel-bootcamp)开始来认识Chisel。
+官方的推荐是从[Chisel Bootcamp](https://github.com/freechipsproject/chisel-bootcamp)开始来认识Chisel。本教程是基于Jupyter的，这里有[在线版本](https://mybinder.org/v2/gh/freechipsproject/chisel-bootcamp/master)，无需安装Jupyter。
 
 还有一本[Cookbook](https://github.com/freechipsproject/chisel3/wiki/Cookbook)可供参考，此书写了一些用Chisel实现的电路的例子。
 
 官方也贴心的为我们提供了一份Chisel的[CheatSheet](https://github.com/freechipsproject/chisel-cheatsheet/releases/latest/download/chisel_cheatsheet.pdf)。可以将此打印出来或者下载下来作为提示。
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
 我们会时不时的遇到这几个名词：Chisel，FIRRTL，iotesters(Chisel Testers)，testers2(chisel-testers2)，treadle，diagrammer(Chisel / FIRRTL Diagramming Project)。
 
 - Chisel：代表了Chisel这门语言本身，加上Chisel标准库和Chisel测试便利工具，这三个东西一起提供了一种新的硬件设计的方法。
@@ -52,5 +123,58 @@ Chisel是基于Scala的，所以有Scala的学习经验的话，会很好的帮�
 >3. [OrderedDecoupledHWIOTester](https://>www.chisel-lang.org/chisel-testers/>#ordereddecoupledhwiotester)
 
 其中特殊的是PeekPokeTester，它支持两种不同的后端，Firrtl Interpreter，verilator backend。
-
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
 Appendix：
