@@ -30,13 +30,39 @@ Chisel是基于Scala的，所以有Scala的学习经验的话，会很好的帮�
 
 官方也贴心的为我们提供了一份Chisel的[CheatSheet](https://github.com/freechipsproject/chisel-cheatsheet/releases/latest/download/chisel_cheatsheet.pdf)。可以将此打印出来或者下载下来作为提示。
 
+Chisel Bootcamp，使用的是Jupyter，这个工具有很多的好处，它可以边学习边查看代码，在当前的界面便可以查看到运行的结果。重要的是当前Jupyter已被很多人使用，所以还是很有必要去学习一下这个工具的。安装的时候推荐使用[Anaconda](https://www.anaconda.com)安装Jupyter，Anaconda为python套件，有很多东西都会帮忙安装好，**我们为了学习而不是去学习如何安装软件**，就直接采用Anaconda的方案吧。
+
+安装时记得去查看距离自己最近的镜像站，有很好的加速作用。比如我所在的地方使用[ustc的镜像站](http://mirrors.ustc.edu.cn/)便可以有很好的加速效果。
+
+安装好之后就可以在没有联网的情况下撒欢地学习啦，当然最重要的是有时官方网站速度很慢，等待加载的时间太痛苦了。
 
 
+在Scala中if语句会返回值，是一个很强大的功能，特别是使用在函数和类的初始化中。
+```Scala
+val likelyCharactersSet = if (alphabet.length == 26)
+    "english"
+else 
+    "not english"
 
+println(likelyCharactersSet)//来自官方的教程
+```
 
+函数：当函数没有参数时，不需要()双括号。一般来说，无双括号的函数仅仅会返回一个值而不是改变一些东西，当函数确实会改变类的变量或者是打印一些东西时，则需要双括号。
 
+Scala支持函数重载，但是官方建议避免使用。
 
+Scala的for语句：
+```Scala
+for (i <- 0 to 7) { print(i + " ") }
+println()//这里是从0到7
 
+for (i <- 0 until 7) { print(i + " ") }
+println()//这里是从0到6
+
+for(i <- 0 to 10 by 2) { print(i + " ") }
+println()//步进为2
+```
+for语句可便利一个结构中的所有元素。
 
 
 
