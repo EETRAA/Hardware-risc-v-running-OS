@@ -64,10 +64,73 @@ println()//步进为2
 ```
 for语句可便利一个结构中的所有元素。
 
+包和导入：鼓励将命名更有意义，更有层次。
+
+Scala是一门面向对象的编程语言：
+
+类可以从特征继承。可以将特征想象成一个能让类继承多个类的途径，但是这个途径有所限制。
+
+println中$符号后边可以跟表达式，像这样：${...}
+
+匿名函数在Scala中同样使用很多
+
+当一个函数的参数有默认值时，此函数被调用时，可以不给默认值传参数。
+
+>**_初识篇完。_**
 
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+
+**http://twitter.github.io/scala_school/** 一个scala学习资源
+**http://twitter.github.io/effectivescala/index-cn.html**一个scala学习资源
+_programming in scala_scala作者编写，引申出为什么要去看作者编写的东西
 
 
 
