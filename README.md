@@ -13,6 +13,8 @@ A risc-v architecture implementation.
 
 4. [UCB github main page](https://github.com/ucb-bar)
 
-5. [rocket chip github main page](https://github.com/chipsalliance/rocket-chip)
+5. [rocket chip generator github main page](https://github.com/chipsalliance/rocket-chip)
+
+chipyard: use chipyard to modify the top-level-design of a rocket-chip based SoC.
 
 6. [tools from SiFive](https://www.sifive.com/boards/)
