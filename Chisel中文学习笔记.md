@@ -37,6 +37,8 @@ Chisel Bootcamp，使用的是Jupyter，这个工具有很多的好处，它可�
 安装好之后就可以在没有联网的情况下撒欢地学习啦，当然最重要的是有时官方网站速度很慢，等待加载的时间太痛苦了。
 
 
+# Module 1: Introduction to Scala
+
 在Scala中if语句会返回值，是一个很强大的功能，特别是使用在函数和类的初始化中。
 ```Scala
 val likelyCharactersSet = if (alphabet.length == 26)
@@ -78,11 +80,114 @@ println中$符号后边可以跟表达式，像这样：${...}
 
 >**_初识篇完。_**
 
+# Module 2.1: Your First Chisel Module
 
+Motivation：
+Chisel代表的是**C**onstructing **H**ardware **I**n a **S**cala **E**mbedded **L**anguage.
 
+必要的设置：（先遵循官方的设置，有需求时再去修改）
 
+```Scala
+val path = System.getProperty("user.dir") + "/source/load-ivy.sc"
+interp.load.module(ammonite.ops.Path(java.nio.file.FileSystems.getDefault().getPath(path)))
+```
 
+以下是在Scala中使用Chisel库的必要语句
 
+```Scala
+import chisel3._
+import chisel3.util._
+import chisel3.iotesters.{ChiselFlatSpec, Driver, PeekPokeTester}
+```
+
+## 接下来就是一个简单的Chisel写的模块了，会有很多不好理解的东西，但不影响学习，
+
+```Scala
+// Chisel Code: Declare a new module definition
+class Passthrough extends Module {
+  val io = IO(new Bundle {
+    val in = Input(UInt(4.W))
+    val out = Output(UInt(4.W))
+  })
+  io.out := io.in
+}
+```
+Module是所有Chisel模块必须继承的类
+```Scala 
+val io = IO(...)
+```
+这里val io中的io是强制命名的。
+```Scala 
+new Bundle {
+    val in = Input(...)
+    val out = Output(...)
+}
+```
+在IO(...)中进行端口的声明。
+```Scala 
+UInt(4.W)
+```
+UInt表示无符号整型
+```Scala
+io.out := io.in
+```
+:=是有方向的操作符
+
+使用硬件形成语言的好处是可以用基语言Scala当做脚本语言去运行。如上述中的Chisel passthrough模块就可以用Scala去调用Chisel的编译器去生成相应的Verilog模块。这个过程称为**阐述**
+虽然Chisel会尽力去保留你定义的模块名称，但有时会失败。
+
+实例：一个模块生成器
+
+```Scala
+// Chisel Code, but pass in a parameter to set widths of ports
+class PassthroughGenerator(width: Int) extends Module { 
+  val io = IO(new Bundle {
+    val in = Input(UInt(width.W))
+    val out = Output(UInt(width.W))
+  })
+  io.out := io.in
+}
+
+// Let's now generate modules with different widths
+println(getVerilog(new PassthroughGenerator(10)))
+println(getVerilog(new PassthroughGenerator(20)))
+```
+这里使用了Scala语言的特性实现了一个Chisel模块生成器
+
+## 测试你的硬件代码
+
+Chisel有内置的测试器
+
+实例：一个测试器
+```Scala
+// Scala Code: Calling Driver to instantiate Passthrough + PeekPokeTester and execute the test.
+// Don't worry about understanding this code; it is very complicated Scala.
+// Think of it more as boilerplate to run a Chisel test.
+val testResult = Driver(() => new Passthrough()) {
+  c => new PeekPokeTester(c) {
+    poke(c.io.in, 0)     // Set our input to value 0
+    expect(c.io.out, 0)  // Assert that the output correctly has 0
+    poke(c.io.in, 1)     // Set our input to value 1
+    expect(c.io.out, 1)  // Assert that the output correctly has 1
+    poke(c.io.in, 2)     // Set our input to value 2
+    expect(c.io.out, 2)  // Assert that the output correctly has 2
+  }
+}
+assert(testResult)   // Scala Code: if testResult == false, will throw an error
+println("SUCCESS!!") // Scala Code: if we get here, our tests passed!
+```
+
+上面发生了什么呢？
+poke()给输入赋值，expect()检查是否得到的是预测到的值。
+如果不想检查输出的值，则可以使用peek()来输入值。
+
+## Looking at Generated Verilog/FIRRTL
+
+查看Verilog/FIRRTL代码。
+
+## 附录
+
+println()并不是最好的调试手段。因为println()函数是scala的函数，所以并不可以在电路仿真阶段使用，因为生成的代码是FIRRTL或者是Verilog。
 
 
 
@@ -129,8 +234,10 @@ println中$符号后边可以跟表达式，像这样：${...}
 <br>
 
 **http://twitter.github.io/scala_school/** 一个scala学习资源
-**http://twitter.github.io/effectivescala/index-cn.html**一个scala学习资源
-_programming in scala_scala作者编写，引申出为什么要去看作者编写的东西
+
+**http://twitter.github.io/effectivescala/index-cn.html** 一个scala学习资源
+
+_programming in scala_ scala作者编写，引申出为什么要去看作者编写的东西
 
 
 
