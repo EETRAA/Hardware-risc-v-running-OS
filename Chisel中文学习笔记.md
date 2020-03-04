@@ -13,7 +13,7 @@
 - [Chisel的官网](https://www.chisel-lang.org/)
 - [Chisel安装相关](https://github.com/freechipsproject/chisel3/blob/master/SETUP.md)
 - [Chisel的wiki网站](https://github.com/freechipsproject/chisel3/wiki)
-- [Chisel的api网站](https://www.chisel-lang.org/api/latest/)，这里可以找到[Chisel3主要的api列表](https://www.chisel-lang.org/api/latest/chisel3/index.html)
+- [Chisel的api网站](https://www.chisel-lang.org/api/latest/)，这里可以找到[Chisel3主要的api列表](https://www.chisel-lang.org/api/latest/chisel3/index.html)，当然不要忘了[向上层查看](https://www.chisel-lang.org/api)
 
 Chisel是基于Scala的，所以有Scala的学习经验的话，会很好的帮助理解Chisel，当然在遇到Chisel的一些难解的问题时，翻翻Scala的手册也是很好的解决办法。
 
@@ -185,9 +185,132 @@ poke()给输入赋值，expect()检查是否得到的是预测到的值。
 
 查看Verilog/FIRRTL代码。
 
-## 附录
+### 附录:
 
 println()并不是最好的调试手段。因为println()函数是scala的函数，所以并不可以在电路仿真阶段使用，因为生成的代码是FIRRTL或者是Verilog。
+
+## Module 2.2: Combinational Logic
+
+Scala的强类型特性使得Chisel的数据类型在计算时要相互匹配，不然会有Err出现。
+
+Example: Mux and Concatenation
+
+```Scala
+class MyOperatorsTwo extends Module {
+  val io = IO(new Bundle {
+    val in      = Input(UInt(4.W))
+    val out_mux = Output(UInt(4.W))
+    val out_cat = Output(UInt(4.W))
+  })
+
+  val s = true.B
+  io.out_mux := Mux(s, 3.U, 0.U) // should return 3.U, since s is true
+  io.out_cat := Cat(2.U, 1.U)    // concatenates 2 (b10) with 1 (b1) to give 5 (101)
+}
+
+println(getVerilog(new MyOperatorsTwo))
+class MyOperatorsTwoTester(c: MyOperatorsTwo) extends PeekPokeTester(c) {
+  expect(c.io.out_mux, 3)
+  expect(c.io.out_cat, 5)
+}
+assert(Driver(() => new MyOperatorsTwo) {c => new MyOperatorsTwoTester(c)})
+println("SUCCESS!!")
+```
+
+本章节多了几个练习，重要的是开始理解Chisel的框架。
+
+## Module 2.3: Control Flow
+
+最后有效语句
+```Scala
+class LastConnect extends Module {
+  val io = IO(new Bundle {
+    val in = Input(UInt(4.W))
+    val out = Output(UInt(4.W))
+  })
+  io.out := 1.U
+  io.out := 2.U
+  io.out := 3.U
+  io.out := 4.U
+}
+
+// Chisel Code: Declare a new tester for modules
+class LastConnectTester(c: LastConnect) extends PeekPokeTester(c) {
+  expect(c.io.out, 4)  // Assert that the output correctly has 4
+}
+
+//  Test LastConnect
+val works = Driver(() => new LastConnect) {
+  c => new LastConnectTester(c)
+}
+assert(works)        // Scala Code: if works == false, will throw an error
+println("SUCCESS!!") // Scala Code: if we get here, our tests passed!
+```
+
+实际上运行到了最后一句语句，也就是io.out 被赋值了4。
+
+## `when`, `elsewhen`, and `otherwise`
+
+```Scala
+when(someBooleanCondition) {
+  // things to do when true
+}.elsewhen(someOtherBooleanCondition) {
+  // things to do on this condition
+}.otherwise {
+  // things to do if none of th boolean conditions are true
+}
+```
+此结构无返回值。
+
+## The Wire Construct
+
+wire这里理解为连线。可出现在:=的左边或右边。
+
+```Scala
+// verify the all possible ordering of 4 numbers are sorted
+class BetterSort4Tester(c: Sort4) extends PeekPokeTester(c) {
+  List(1, 2, 3, 4).permutations.foreach { case i0 :: i1 :: i2 :: i3 :: Nil =>
+    println(s"Sorting $i0 $i1 $i2 $i3")
+    poke(c.io.in0, i0)
+    poke(c.io.in1, i1)
+    poke(c.io.in2, i2)
+    poke(c.io.in3, i3)
+    expect(c.io.out0, 1)
+    expect(c.io.out1, 2)
+    expect(c.io.out2, 3)
+    expect(c.io.out3, 4)
+  }
+}
+```
+
+这里第一次出现了List特性，知道是tester的特性便好。
+
+Chisel提供了一个方便的状态机映射函数Enum()，如何使用呢？将枚举中的元素当做是UInt便好。
+
+```Scala
+when (io.state === idle) {
+    when      (io.coffee) { io.nextState := coding } 
+    .elsewhen (io.idea) { io.nextState := idle }
+    .elsewhen (io.pressure) { io.nextState := writing }
+  } .elsewhen (io.state === coding) {
+    when      (io.coffee) { io.nextState := coding } 
+    .elsewhen (io.idea || io.pressure) { io.nextState := writing }
+  } .elsewhen (io.state === writing) {
+    when      (io.coffee || io.idea) { io.nextState := writing }
+    .elsewhen (io.pressure) { io.nextState := grad }
+  }
+```
+
+
+
+
+
+
+
+
+
+
+
 
 
 
