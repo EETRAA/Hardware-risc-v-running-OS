@@ -264,7 +264,35 @@ when(someBooleanCondition) {
 
 ## The Wire Construct
 
-wire这里理解为连线。可出现在:=的左边或右边。
+```Scala
+/** Sort4 sorts its 4 inputs to its 4 outputs */
+class Sort4 extends Module {
+  val io = IO(new Bundle {
+    val in0 = Input(UInt(16.W))
+    val in1 = Input(UInt(16.W))
+    val in2 = Input(UInt(16.W))
+    val in3 = Input(UInt(16.W))
+    val out0 = Output(UInt(16.W))
+    val out1 = Output(UInt(16.W))
+    val out2 = Output(UInt(16.W))
+    val out3 = Output(UInt(16.W))
+  })
+
+  val row10 = Wire(UInt(16.W))
+  val row11 = Wire(UInt(16.W))
+  val row12 = Wire(UInt(16.W))
+  val row13 = Wire(UInt(16.W))
+
+  when(io.in0 < io.in1) {
+    row10 := io.in0            // preserve first two elements
+    row11 := io.in1
+  }.otherwise {
+    row10 := io.in1            // swap first two elements
+    row11 := io.in0
+  }
+```
+
+`Wire()`这里理解为连线。可出现在`:=`的左边或右边。
 
 ```Scala
 // verify the all possible ordering of 4 numbers are sorted
@@ -283,9 +311,9 @@ class BetterSort4Tester(c: Sort4) extends PeekPokeTester(c) {
 }
 ```
 
-这里第一次出现了List特性，知道是tester的特性便好。
+这里第一次出现了`List()`特性，知道是tester的特性便好，可使得测试方便。
 
-Chisel提供了一个方便的状态机映射函数Enum()，如何使用呢？将枚举中的元素当做是UInt便好。
+Chisel提供了一个方便的状态机映射函数`Enum()`，如何使用呢？将枚举中的元素当做是UInt便好。
 
 ```Scala
 when (io.state === idle) {
@@ -301,12 +329,115 @@ when (io.state === idle) {
   }
 ```
 
+## Module 2.4: Sequential Logic
 
+没有状态的电路是没有意义的。没有状态的电路是没有意义的。没有状态的电路是没有意义的......
 
+Chisel强大之处在于将设计参数化。
 
+寄存器：
 
+默认情况下，每个Chisel模块含有一个隐含的共享时钟，这会节省一些时间。
 
+```Scala
+class RegisterModule extends Module {
+  val io = IO(new Bundle {
+    val in  = Input(UInt(12.W))
+    val out = Output(UInt(12.W))
+  })
+  
+  val register = Reg(UInt(12.W))
+  register := io.in + 1.U
+  io.out := register
+}
 
+class RegisterModuleTester(c: RegisterModule) extends PeekPokeTester(c) {
+  for (i <- 0 until 100) {
+    poke(c.io.in, i)
+    step(1)
+    expect(c.io.out, i+1)
+  }
+}
+assert(chisel3.iotesters.Driver(() => new RegisterModule) { c => new RegisterModuleTester(c) })
+println("SUCCESS!!")
+```
+
+这里的寄存器由`Reg(tpe)`函数创建。调用函数`step(n)`使得时钟跳动n次。
+
+注意：
+
+- 时钟输入端并没有被显示声明，因为使用了隐含时钟。
+- 寄存器在时钟上升沿被更新。
+
+在Chisel中，这两者是不同的：`UInt`和`2.U`，前者是类型，后者是硬件节点。（hardware node）
+
+`val myReg = Reg(UInt(2.W))` -->legal 
+
+`val myReg = Reg(2.U)` -->illegal 
+
+```Scala
+class RegNextModule extends Module {
+  val io = IO(new Bundle {
+    val in  = Input(UInt(12.W))
+    val out = Output(UInt(12.W))
+  })
+  
+  // register bitwidth is inferred from io.out
+  io.out := RegNext(io.in + 1.U)
+}
+
+class RegNextModuleTester(c: RegNextModule) extends PeekPokeTester(c) {
+  for (i <- 0 until 100) {
+    poke(c.io.in, i)
+    step(1)
+    expect(c.io.out, i+1)
+  }
+}
+assert(chisel3.iotesters.Driver(() => new RegNextModule) { c => new RegNextModuleTester(c) })
+println("SUCCESS!!")
+```
+
+这里的寄存器名称没有显示声明。
+以上代码段实现的功能与前面的无异。
+
+`val myReg = RegInit(UInt(12.W), 0.U)`
+`val myReg = RegInit(0.U(12.W))`
+
+生成有初始化值的寄存器。
+
+一下为有初始化的模块的实例：
+
+```Scala
+class RegInitModule extends Module {
+  val io = IO(new Bundle {
+    val in  = Input(UInt(12.W))
+    val out = Output(UInt(12.W))
+  })
+  
+  val register = RegInit(0.U(12.W))
+  register := io.in + 1.U
+  io.out := register
+}
+println(getVerilog(new RegInitModule))
+```
+
+`PeekPokeTesters()`始终会在测试前调用重置，当然手动调用`reset(n)`也是可以的，这样会使得reset处于高电平n个周期。
+
+寄存器的值在被运算时决定的是输出值。寄存器自身的数据类型不变。
+
+`val reg: UInt = Reg(UInt(4.W))`
+
+由此来改变寄存器的类型。
+
+## Appendix: Explicit clock and reset
+
+`withClock(){}`,`withReset(){}`和`withClockAndReset(){}`被用来重写时钟。
+
+有一件需要注意的事情是`reset`为同步的，其类型为`Bool`型。在Chisel中时钟(`Clock`)有自己的类型。通过使用`asClock()`，`Bool`型值可以被转换为`Clock`型。
+
+总结：
+
+在下一节中我们会把学到的所有东西整合到一个例程中。
 
 
 
