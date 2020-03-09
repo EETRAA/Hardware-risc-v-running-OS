@@ -439,12 +439,59 @@ println(getVerilog(new RegInitModule))
 
 在下一节中我们会把学到的所有东西整合到一个例程中。
 
+## Module 2.5: Putting it all Together: An FIR Filter
 
+此章节中提供了两个例程。
 
+在其中一个例程中我们初见了rocketchip的身影。
 
+```Scala
+...
+import dspblocks._
+import freechips.rocketchip.amba.axi4._
+import freechips.rocketchip.amba.axi4stream._
+import freechips.rocketchip.config._
+import freechips.rocketchip.diplomacy._
+import freechips.rocketchip.regmapper._
+...
+```
+## Module 2.6: ChiselTest (formerly Testers2)
 
+在此章节中我们见到了新的测试工具，ChiselTest(Testers2)。
 
+```Scala
+...
+import chisel3._
+import chisel3.util._
+import chisel3.experimental._
+import chisel3.experimental.BundleLiterals._
+import chisel3.tester._
+import chisel3.tester.RawTester.test
+...
+```
 
+当然在此也可以看到Chisel也正是处于开发当中，不可避免的有命名混乱，文档不全的问题，留给risc-v团队的时间不多了。
+
+Module 3.1: Generators: Parameters
+
+```Scala
+class ParameterizedWidthAdder(in0Width: Int, in1Width: Int, sumWidth: Int) extends Module {
+  require(in0Width >= 0)
+  require(in1Width >= 0)
+  require(sumWidth >= 0)
+  val io = IO(new Bundle {
+    val in0 = Input(UInt(in0Width.W))
+    val in1 = Input(UInt(in1Width.W))
+    val sum = Output(UInt(sumWidth.W))
+  })
+  // a +& b includes the carry, a + b does not
+  io.sum := io.in0 +& io.in1
+}
+
+println(getVerilog(new ParameterizedWidthAdder(1, 4, 6)))
+```
+
+这里的`require(in0Width >= 0)`对参数进行检查。
 
 
 
