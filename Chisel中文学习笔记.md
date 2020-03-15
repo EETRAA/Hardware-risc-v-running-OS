@@ -474,7 +474,7 @@ import chisel3.tester.RawTester.test
 
 当然在此也可以看到Chisel也正是处于开发当中，不可避免的有命名混乱，文档不全的问题，留给risc-v团队的时间不多了。
 
-Module 3.1: Generators: Parameters
+## Module 3.1: Generators: Parameters
 
 ```Scala
 class ParameterizedWidthAdder(in0Width: Int, in1Width: Int, sumWidth: Int) extends Module {
@@ -494,6 +494,243 @@ println(getVerilog(new ParameterizedWidthAdder(1, 4, 6)))
 ```
 
 这里的`require(in0Width >= 0)`对参数进行检查。
+
+## Module 3.2: Generators: Collections
+
+这里的Collection指的是Scala中。
+
+### Example: FIR 参考模型
+
+```Scala
+/**
+  * A naive implementation of an FIR filter with an arbitrary number of taps.
+  */
+class ScalaFirFilter(taps: Seq[Int]) {
+  var pseudoRegisters = List.fill(taps.length)(0)
+
+  def poke(value: Int): Int = {
+    pseudoRegisters = value :: pseudoRegisters.take(taps.length - 1)
+    var accumulator = 0
+    for(i <- taps.indices) {
+      accumulator += taps(i) * pseudoRegisters(i)
+    }
+    accumulator
+  }
+}
+```
+
+`poke`函数中的accumulator作为函数的返回值。
+
+```Scala
+val filter = new ScalaFirFilter(Seq(1, 1, 1, 1))
+
+var out = 0
+
+out = filter.poke(1)
+println(s"out = $out")
+assert(out == 1)  // 1, 0, 0, 0
+
+out = filter.poke(4)
+assert(out == 5)  // 4, 1, 0, 0
+println(s"out = $out")
+
+out = filter.poke(3)
+assert(out == 8)  // 3, 4, 1, 0
+println(s"out = $out")
+
+out = filter.poke(2)
+assert(out == 10)  // 2, 3, 4, 1
+println(s"out = $out")
+
+out = filter.poke(7)
+assert(out == 16)  // 7, 2, 3, 4
+println(s"out = $out")
+
+out = filter.poke(0)
+assert(out == 12)  // 0, 7, 2, 3
+println(s"out = $out")
+```
+
+上面是简单的一个测试，将我们前面设计好的类实例化后，进行简单的方法调用，来测试是否工作正常。
+
+```Scala
+val goldenModel = new ScalaFirFilter(Seq(1, 1, 1, 1))
+
+Driver(() => new My4ElementFir(1, 1, 1, 1)) {
+  c => new PeekPokeTester(c) {
+    for(i <- 0 until 100) {
+      val input = scala.util.Random.nextInt(8)
+
+      val goldenModelResult = goldenModel.poke(input)
+
+      poke(c.io.in, input)
+
+      expect(c.io.out, goldenModelResult, s"i $i, input $input, gm $goldenModelResult, ${peek(c.io.out)}")
+
+      step(1)
+    }
+  }
+}
+```
+
+### Example: Parameterized FIR Generator
+
+```Scala
+class MyManyElementFir(consts: Seq[Int], bitWidth: Int) extends Module {
+  val io = IO(new Bundle {
+    val in = Input(UInt(bitWidth.W))
+    val out = Output(UInt(bitWidth.W))
+  })
+
+  val regs = mutable.ArrayBuffer[UInt]()
+  for(i <- 0 until consts.length) {
+      if(i == 0) regs += io.in
+      else       regs += RegNext(regs(i - 1), 0.U)
+  }
+  
+  val muls = mutable.ArrayBuffer[UInt]()
+  for(i <- 0 until consts.length) {
+      muls += regs(i) * consts(i).U
+  }
+
+  val scan = mutable.ArrayBuffer[UInt]()
+  for(i <- 0 until consts.length) {
+      if(i == 0) scan += muls(i)
+      else scan += muls(i) + scan(i - 1)
+  }
+
+  io.out := scan.last
+}
+```
+
+其中的 `bitWith` 参数是为了控制滤波器可以处理的数据的长度。
+
+`ArrayBuffer` 允许我们使用 `+=` 操作符来为其增加元素。
+
+### Hardware Collections
+
+### Example: Add run-time configurable taps to our FIR
+
+```Scala
+class MyManyDynamicElementVecFir(length: Int) extends Module {
+  val io = IO(new Bundle {
+    val in = Input(UInt(8.W))
+    val out = Output(UInt(8.W))
+    val consts = Input(Vec(length, UInt(8.W)))
+  })
+
+  // Reference solution
+  val regs = RegInit(VecInit(Seq.fill(length - 1)(0.U(8.W))))
+  for(i <- 0 until length - 1) {
+      if(i == 0) regs(i) := io.in
+      else       regs(i) := regs(i - 1)
+  }
+  
+  val muls = Wire(Vec(length, UInt(8.W)))
+  for(i <- 0 until length) {
+      if(i == 0) muls(i) := io.in * io.consts(i)
+      else       muls(i) := regs(i - 1) * io.consts(i)
+  }
+
+  val scan = Wire(Vec(length, UInt(8.W)))
+  for(i <- 0 until length) {
+      if(i == 0) scan(i) := muls(i)
+      else scan(i) := muls(i) + scan(i - 1)
+  }
+
+  io.out := scan(length - 1)
+}
+```
+
+上述的代码为我们的FIR生成器添加了一个名为 `consts` 的IO口，它使得我们可以在代电路生成后，也可以进行参数的修改。
+
+最简单的说明就是我们先前用参数定制电路，使得一段代码可以因参数的不同产生不同的定制电路，而现在使用 `Vec()` 使得电路的在生成后，参数也可以由外部改变。
+
+一般有两种情况下需要使用。
+
+1. 需要一个IO口的集合
+2. 需要用硬件索引来读取集合的值。
+
+```Scala
+class MyManyDynamicElementVecFir(length: Int) extends Module {
+  val io = IO(new Bundle {
+    val in = Input(UInt(8.W))
+    val out = Output(UInt(8.W))
+    val consts = Input(Vec(length, UInt(8.W)))
+  })
+
+  // Reference solution
+  val regs = RegInit(VecInit(Seq.fill(length - 1)(0.U(8.W))))
+  for(i <- 0 until length - 1) {
+      if(i == 0) regs(i) := io.in
+      else       regs(i) := regs(i - 1)
+  }
+  
+  val muls = Wire(Vec(length, UInt(8.W)))
+  for(i <- 0 until length) {
+      if(i == 0) muls(i) := io.in * io.consts(i)
+      else       muls(i) := regs(i - 1) * io.consts(i)
+  }
+
+  val scan = Wire(Vec(length, UInt(8.W)))
+  for(i <- 0 until length) {
+      if(i == 0) scan(i) := muls(i)
+      else scan(i) := muls(i) + scan(i - 1)
+  }
+
+  io.out := scan(length - 1)
+}
+```
+
+```Scala
+val goldenModel = new ScalaFirFilter(Seq(1, 1, 1, 1))
+
+Driver(() => new MyManyDynamicElementVecFir(4)) {
+  c => new PeekPokeTester(c) {
+    poke(c.io.consts(0), 1)//这里便使用了IO口集合索引
+    poke(c.io.consts(1), 1)
+    poke(c.io.consts(2), 1)
+    poke(c.io.consts(3), 1)
+    for(i <- 0 until 100) {
+      val input = scala.util.Random.nextInt(8)
+
+      val goldenModelResult = goldenModel.poke(input)
+
+      poke(c.io.in, input)
+
+      expect(c.io.out, goldenModelResult, s"i $i, input $input, gm $goldenModelResult, ${peek(c.io.out)}")
+
+      step(1)
+    }
+  }
+}
+```
+
+## Module 3 Interlude: Chisel Standard Library
+
+这章节主要介绍了一些Chisel标准库里的东西，包括了一些就接口和常用的模块。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
