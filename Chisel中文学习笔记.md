@@ -39,7 +39,7 @@ Chisel Bootcamp，使用的是Jupyter，这个工具有很多的好处，它可�
 安装好之后就可以在没有联网的情况下撒欢地学习啦，当然最重要的是有时官方网站速度很慢，等待加载的时间太痛苦了。
 
 
-# Module 1: Introduction to Scala
+## Module 1: Introduction to Scala
 
 在Scala中if语句会返回值，是一个很强大的功能，特别是使用在函数和类的初始化中。
 ```Scala
@@ -82,7 +82,7 @@ println中$符号后边可以跟表达式，像这样：${...}
 
 >**_初识篇完。_**
 
-# Module 2.1: Your First Chisel Module
+## Module 2.1: Your First Chisel Module
 
 Motivation：
 Chisel代表的是**C**onstructing **H**ardware **I**n a **S**cala **E**mbedded **L**anguage.
@@ -709,6 +709,88 @@ Driver(() => new MyManyDynamicElementVecFir(4)) {
 ## Module 3 Interlude: Chisel Standard Library
 
 这章节主要介绍了一些Chisel标准库里的东西，包括了一些就接口和常用的模块。
+
+那些前面用到的 `for` 语句特别的繁琐，不明显，打乱了函数式编程的目的。接下来我们将通过学习将之前的生成器变得函数式起来
+
+### A Tale of Two FIRs 
+
+在上一个模块中，我们写出了很复杂的FIR的代码实现。
+
+```Scala
+val muls = Wire(Vec(length, UInt(8.W)))
+for(i <- 0 until length) {
+  if(i == 0) muls(i) := io.in * io.consts(i)
+  else       muls(i) := regs(i - 1) * io.consts(i)
+}
+
+val scan = Wire(Vec(length, UInt(8.W)))
+for(i <- 0 until length) {
+  if(i == 0) scan(i) := muls(i)
+  else scan(i) := muls(i) + scan(i - 1)
+}
+
+io.out := scan(length - 1)
+```
+
+然而这么复杂的过程实现其实可以用一句话来完成
+
+```Scala
+io.out := (taps zip io.consts).map { case (a, b) => a * b }.reduce(_ + _)
+```
+
+### Functions as Arguments
+
+一般呢我们将上面的 `map` 和 `reduce` 两个函数称为 **higher-order functions** ,这些函数将另一个函数作为参数，这是一项非常强大的特性，使得我们可以将注意力专注到逻辑的实现上，而不是逻辑的控制流上。
+
+那我们申明呢？
+
+1. 隐式地申明，如：`_ + _`
+2. 显示地申明，如：`case`语句，它将元组中的一个元素拆分为两个量。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
