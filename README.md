@@ -3,7 +3,7 @@ A risc-v architecture implementation.
 
 # Current progress:
 
-- Useful links :link::
+## Useful links :link::
 
 1. [qemu](https://www.qemu.org/) :QEMU is a generic and open source machine emulator and virtualizer.
 
@@ -28,6 +28,8 @@ A risc-v architecture implementation.
 11. [Renode](https://renode.io/).
    
 12. [tools from SiFive](https://www.sifive.com/boards/).
+
+13. [Zynq risc-v implementation]https://github.com/riscv-boom/fpga-zynq#riscv-linux.
 
 ## cores (Please use *Chipyard* to build SoCs):
 
